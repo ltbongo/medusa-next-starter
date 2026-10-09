@@ -44,7 +44,7 @@ Official Medusa v2 monorepo scaffold (`create-medusa-app --with-nextjs-starter`)
 
 ## Quick start (B9)
 
-**Requirements:** Node.js 22 LTS, PostgreSQL 15+, npm 11+.
+**Requirements:** Node.js 22 LTS, Docker (for local Postgres + Redis), npm 11+.
 
 ```bash
 git clone https://github.com/ltbongo/medusa-next-starter.git
@@ -52,11 +52,14 @@ cd medusa-next-starter
 npm install --include=dev
 ```
 
-1. Backend env: `cp apps/backend/.env.template apps/backend/.env` and set `DATABASE_URL` (Postgres must exist).
-2. Migrate and create admin: `cd apps/backend && npx medusa db:migrate && npx medusa user -e admin@test.com -p <password>`
-3. Start backend: `npm run dev` (from `apps/backend`) — admin at `http://localhost:9000/app`. Copy a **publishable API key** from Settings.
-4. Storefront env: `cp apps/storefront/.env.template apps/storefront/.env.local` and set `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`.
-5. Start storefront: `cd apps/storefront && npm run dev` → `http://localhost:8000`
+1. Start data services: `docker compose up -d` (Postgres 15 + Redis 7 on `localhost`).
+2. Backend env: `cp apps/backend/.env.template apps/backend/.env` — defaults match `docker-compose.yml` (`DATABASE_URL`, `REDIS_URL`, CORS for local Next.js).
+3. Seed demo catalogue (South Africa region, 12 ZAR products): `cd apps/backend && npm run seed`  
+   The command runs migrations and prints the **publishable API key** token for the storefront. You can also copy it later from Medusa admin → **Settings → Publishable API Keys** (`http://localhost:9000/app`).
+4. Create an admin user (once): `cd apps/backend && npx medusa user -e admin@test.com -p <password>`
+5. Start backend: `npm run dev` (from `apps/backend`) — admin at `http://localhost:9000/app`.
+6. Storefront env: `cp apps/storefront/.env.template apps/storefront/.env.local` and set `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` to the key from step 3.
+7. Start storefront: `cd apps/storefront && npm run dev` → `http://localhost:8000` (use country code `za` in the URL path when browsing regions).
 
 **Storefront production build:** requires the backend running on `NEXT_PUBLIC_MEDUSA_BACKEND_URL` (default `http://localhost:9000`) so Next.js can fetch catalog data at build time:
 
