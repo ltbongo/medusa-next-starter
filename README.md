@@ -61,14 +61,18 @@ npm install --include=dev
 6. Storefront env: `cp apps/storefront/.env.template apps/storefront/.env.local` and set `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` to the key from step 3.
 7. Start storefront: `cd apps/storefront && npm run dev` → `http://localhost:8000` (use country code `za` in the URL path when browsing regions).
 
-**Storefront production build:** requires the backend running on `NEXT_PUBLIC_MEDUSA_BACKEND_URL` (default `http://localhost:9000`) so Next.js can fetch catalog data at build time:
+**Storefront production build (CI / Docker image):** the default `npm run build` sets `B9_STOREFRONT_OFFLINE_BUILD=1`, which skips Medusa-backed static path generation so the image can build without a live API. You still need `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` set (any non-empty placeholder is enough for the env check).
 
 ```bash
 cd apps/storefront
 NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_... npm run build
 ```
 
-Without Postgres/backend, `npm run build` compiles but fails during static page collection (`ECONNREFUSED` to port 9000).
+**Full static prerender** (optional, closer to upstream Medusa): unset the offline flag and run the backend during build:
+
+```bash
+B9_STOREFRONT_OFFLINE_BUILD=0 NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_... npm run build
+```
 
 > **Note:** Target GitHub org is `b9design/medusa-next-starter`; the PAT used here created `ltbongo/medusa-next-starter` until org admin access is granted (transfer or recreate under the org).
 
