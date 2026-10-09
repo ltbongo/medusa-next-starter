@@ -1,0 +1,12 @@
+node_modules
+.git
+.env
+.env.*
+!.env.template
+**/.next
+**/.medusa
+**/dist
+**/coverage
+**/*.log
+apps/storefront/.env.local
+apps/backend/.env

@@ -76,6 +76,23 @@ B9_STOREFRONT_OFFLINE_BUILD=0 NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_... npm run 
 
 > **Note:** Target GitHub org is `b9design/medusa-next-starter`; the PAT used here created `ltbongo/medusa-next-starter` until org admin access is granted (transfer or recreate under the org).
 
+## B9 reference deploy (Dokploy)
+
+Internal QA stack on Dokploy (Dockerfile build, `docker-compose.dokploy.yml`):
+
+| Service | Image / build |
+|---------|----------------|
+| Postgres + Redis | upstream images in compose |
+| Medusa API | `apps/backend/Dockerfile` |
+| Storefront | `apps/storefront/Dockerfile` (root `Dockerfile` is storefront-only) |
+
+**Reference storefront URL:** https://medusa-next-starter.demo.b9design.co.za  
+**Medusa API / admin:** https://medusa-next-starter-api.demo.b9design.co.za (`/app` for admin UI)
+
+After the first deploy, copy the publishable API key from the backend seed logs into Dokploy compose env as `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` and redeploy so the storefront bundle matches the seeded backend.
+
+Demo admin uses the shared company `B9_DEMO_LOGIN` pattern (`b9demo` user) once an admin account is created on the reference instance — public storefront pages stay open (no site-wide basic auth).
+
 ---
 
 # Medusa DTC Starter
