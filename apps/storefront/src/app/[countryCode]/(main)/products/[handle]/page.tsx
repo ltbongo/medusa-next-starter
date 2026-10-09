@@ -4,6 +4,7 @@ import { listProducts } from "@lib/data/products"
 import { getRegion, listRegions } from "@lib/data/regions"
 import ProductTemplate from "@modules/products/templates"
 import { HttpTypes } from "@medusajs/types"
+import { isOfflineStorefrontBuild } from "@lib/util/offline-build"
 
 type Props = {
   params: Promise<{ countryCode: string; handle: string }>
@@ -11,6 +12,10 @@ type Props = {
 }
 
 export async function generateStaticParams() {
+  if (isOfflineStorefrontBuild()) {
+    return []
+  }
+
   try {
     const countryCodes = await listRegions().then((regions) =>
       regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()

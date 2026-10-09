@@ -1,0 +1,30 @@
+:root {
+  --b9-gray-0: #ffffff;
+  --b9-gray-5: #f8f9fa;
+  --b9-gray-10: #f1f3f5;
+  --b9-gray-20: #e9ecef;
+  --b9-gray-30: #dee2e6;
+  --b9-gray-40: #ced4da;
+  --b9-gray-50: #adb5bd;
+  --b9-gray-60: #868e96;
+  --b9-gray-70: #495057;
+  --b9-gray-80: #343a40;
+  --b9-gray-90: #212529;
+
+  --b9-bg-base: var(--b9-gray-0);
+  --b9-bg-subtle: var(--b9-gray-5);
+  --b9-fg-base: var(--b9-gray-90);
+  --b9-fg-muted: var(--b9-gray-60);
+  --b9-border: var(--b9-gray-20);
+
+  --b9-accent: #1a1a2e;
+  --b9-accent-muted: #4a4e69;
+}
+
+html[data-mode="dark"] {
+  --b9-bg-base: var(--b9-gray-90);
+  --b9-bg-subtle: var(--b9-gray-80);
+  --b9-fg-base: var(--b9-gray-0);
+  --b9-fg-muted: var(--b9-gray-40);
+  --b9-border: var(--b9-gray-70);
+}

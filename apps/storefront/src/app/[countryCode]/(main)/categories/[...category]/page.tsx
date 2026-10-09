@@ -7,6 +7,7 @@ import { HttpTypes, StoreRegion } from "@medusajs/types"
 import CategoryTemplate from "@modules/categories/templates"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import { parseOptionValueIds } from "@lib/util/product-option-filters"
+import { isOfflineStorefrontBuild } from "@lib/util/offline-build"
 
 type Props = {
   params: Promise<{ category: string[]; countryCode: string }>
@@ -20,6 +21,10 @@ type Props = {
 }
 
 export async function generateStaticParams() {
+  if (isOfflineStorefrontBuild()) {
+    return []
+  }
+
   const product_categories = await listCategories()
 
   if (!product_categories) {
