@@ -391,7 +391,10 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
  * @param cartId - optional - The ID of the cart to place an order for.
  * @returns The cart object if the order was successful, or null if not.
  */
-export async function placeOrder(cartId?: string) {
+/**
+ * Completes the cart without redirecting (PayFast redirect checkout).
+ */
+export async function completeCartWithoutRedirect(cartId?: string) {
   const id = cartId || (await getCartId())
 
   if (!id) {
@@ -412,13 +415,21 @@ export async function placeOrder(cartId?: string) {
     .catch(medusaError)
 
   if (cartRes?.type === "order") {
+    const orderCacheTag = await getCacheTag("orders")
+    revalidateTag(orderCacheTag)
+    removeCartId()
+  }
+
+  return cartRes
+}
+
+export async function placeOrder(cartId?: string) {
+  const cartRes = await completeCartWithoutRedirect(cartId)
+
+  if (cartRes?.type === "order") {
     const countryCode =
       cartRes.order.shipping_address?.country_code?.toLowerCase()
 
-    const orderCacheTag = await getCacheTag("orders")
-    revalidateTag(orderCacheTag)
-
-    removeCartId()
     redirect(`/${countryCode}/order/${cartRes?.order.id}/confirmed`)
   }
 

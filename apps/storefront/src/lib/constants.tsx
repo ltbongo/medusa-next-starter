@@ -33,6 +33,14 @@ export const paymentInfoMap: Record<
     title: "Manual Payment",
     icon: <CreditCard />,
   },
+  pp_payfast: {
+    title: "PayFast",
+    icon: <CreditCard />,
+  },
+  pp_payfast_payfast: {
+    title: "PayFast",
+    icon: <CreditCard />,
+  },
   // Add more payment providers here
 }
 
@@ -48,6 +56,14 @@ export const isPaypal = (providerId?: string) => {
 }
 export const isManual = (providerId?: string) => {
   return providerId?.startsWith("pp_system_default")
+}
+
+export const isPayfast = (providerId?: string) => {
+  if (!providerId) return false
+  return (
+    providerId === "pp_payfast" ||
+    providerId.startsWith("pp_payfast_")
+  )
 }
 
 // Add currencies that don't need to be divided by 100

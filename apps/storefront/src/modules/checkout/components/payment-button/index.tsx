@@ -1,7 +1,8 @@
 "use client"
 
-import { isManual, isStripeLike } from "@lib/constants"
-import { placeOrder } from "@lib/data/cart"
+import { isManual, isPayfast, isStripeLike } from "@lib/constants"
+import { completeCartWithoutRedirect, placeOrder } from "@lib/data/cart"
+import { PayfastRedirectForm } from "@modules/checkout/components/payfast-redirect-form"
 import { HttpTypes } from "@medusajs/types"
 import { Button } from "@modules/common/components/ui"
 import { useElements, useStripe } from "@stripe/react-stripe-js"
@@ -39,6 +40,14 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
     case isManual(paymentSession?.provider_id):
       return (
         <ManualTestPaymentButton notReady={notReady} data-testid={dataTestId} />
+      )
+    case isPayfast(paymentSession?.provider_id):
+      return (
+        <PayfastPaymentButton
+          notReady={notReady}
+          cart={cart}
+          data-testid={dataTestId}
+        />
       )
     default:
       return <Button disabled>Select a payment method</Button>
@@ -151,6 +160,103 @@ const StripePaymentButton = ({
       <ErrorMessage
         error={errorMessage}
         data-testid="stripe-payment-error-message"
+      />
+    </>
+  )
+}
+
+type PayfastRedirectPayload = {
+  action: string
+  fields: Array<[string, string]>
+}
+
+function payfastPayloadFromSession(
+  data: Record<string, unknown> | null | undefined
+): PayfastRedirectPayload | null {
+  if (!data) return null
+  const action = data.action
+  const fields = data.fields
+  if (typeof action !== "string" || !Array.isArray(fields) || !fields.length) {
+    return null
+  }
+  const pairs: Array<[string, string]> = []
+  for (const entry of fields) {
+    if (
+      Array.isArray(entry) &&
+      entry.length === 2 &&
+      typeof entry[0] === "string" &&
+      typeof entry[1] === "string"
+    ) {
+      pairs.push([entry[0], entry[1]])
+    }
+  }
+  if (!pairs.length) return null
+  return { action, fields: pairs }
+}
+
+const PayfastPaymentButton = ({
+  cart,
+  notReady,
+  "data-testid": dataTestId,
+}: {
+  cart: HttpTypes.StoreCart
+  notReady: boolean
+  "data-testid"?: string
+}) => {
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [redirect, setRedirect] = useState<PayfastRedirectPayload | null>(null)
+
+  const paymentSession = cart.payment_collection?.payment_sessions?.find(
+    (s) => isPayfast(s.provider_id)
+  )
+
+  const handlePayment = async () => {
+    const payload = payfastPayloadFromSession(
+      paymentSession?.data as Record<string, unknown> | undefined
+    )
+    if (!payload) {
+      setErrorMessage(
+        "PayFast checkout is not ready. Go back to payment and try again."
+      )
+      return
+    }
+
+    setSubmitting(true)
+    setErrorMessage(null)
+
+    try {
+      const result = await completeCartWithoutRedirect(cart.id)
+      if (result?.type !== "order") {
+        throw new Error("Could not place order before PayFast redirect")
+      }
+      setRedirect(payload)
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Could not start PayFast checkout"
+      )
+      setSubmitting(false)
+    }
+  }
+
+  if (redirect) {
+    return <PayfastRedirectForm action={redirect.action} fields={redirect.fields} />
+  }
+
+  return (
+    <>
+      <Button
+        disabled={notReady}
+        isLoading={submitting}
+        onClick={handlePayment}
+        size="large"
+        data-testid={dataTestId}
+      >
+        Place order
+      </Button>
+      <ErrorMessage
+        error={errorMessage}
+        data-testid="payfast-payment-error-message"
       />
     </>
   )
