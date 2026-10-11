@@ -14,6 +14,24 @@ export default async function PayfastReturnPage({
 }) {
   const { ref } = await searchParams
 
+  const backend = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/+$/, "")
+  const pk = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY?.trim()
+  if (ref && backend && pk) {
+    try {
+      await fetch(`${backend}/store/payfast/reconcile`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": pk,
+        },
+        body: JSON.stringify({ ref }),
+        cache: "no-store",
+      })
+    } catch {
+      /* reconciliation is best-effort; ITN may still arrive */
+    }
+  }
+
   return (
     <div className="content-container py-16 max-w-lg">
       <Heading level="h1" className="text-2xl-semi">
