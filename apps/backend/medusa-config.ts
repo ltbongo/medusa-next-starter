@@ -1,9 +1,4 @@
-import path from 'path'
 import { loadEnv, defineConfig } from '@medusajs/framework/utils'
-
-// Payment provider paths are resolved from this config file's directory. At runtime
-// medusa-config.js lives under `.medusa/server/` (see docker-entrypoint.sh).
-const payfastProviderPath = path.join(__dirname, 'src', 'modules', 'payfast')
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
@@ -29,8 +24,7 @@ module.exports = defineConfig({
         webhook_delay: 0,
         providers: [
           {
-            resolve: payfastProviderPath,
-            id: 'payfast',
+            resolve: './src/modules/payfast',
             options: {},
           },
         ],

@@ -2,9 +2,6 @@
 set -e
 export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--dns-result-order=ipv4first"
 cd /app/apps/backend/.medusa/server
-if [ -f /app/apps/backend/medusa-config.docker.js ]; then
-  cp /app/apps/backend/medusa-config.docker.js ./medusa-config.js
-fi
 if [ -n "${DATABASE_URL:-}" ]; then
   echo "Waiting for database (max 90s)..."
   i=0
