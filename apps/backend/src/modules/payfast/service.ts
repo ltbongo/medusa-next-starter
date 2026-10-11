@@ -317,8 +317,6 @@ export default class PayfastProviderService extends AbstractPaymentProvider<Payf
         data: {
           session_id: sessionId,
           amount: webhookAmount,
-          payment_status: "COMPLETE",
-          pf_payment_id: record.pf_payment_id,
         },
       };
     }

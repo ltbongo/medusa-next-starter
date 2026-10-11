@@ -65,18 +65,25 @@ export async function handlePayfastItn(
       const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
       const { data: sessions } = await query.graph({
         entity: "payment_session",
-        fields: ["id", "data"],
+        fields: ["id", "amount", "currency_code", "data"],
         filters: { id: sessionId },
       });
-      const prev = (sessions?.[0]?.data ?? {}) as Record<string, unknown>;
-      const webhook = processedEvent.data as Record<string, unknown>;
+      const session = sessions?.[0];
+      if (!session?.currency_code || session.amount == null) {
+        res.sendStatus(200);
+        return;
+      }
+      const prev = (session.data ?? {}) as Record<string, unknown>;
+      const pfPaymentId = bodyToRecord(req.body).pf_payment_id;
       await paymentService.updatePaymentSession({
         id: sessionId,
+        amount: session.amount,
+        currency_code: session.currency_code,
         data: {
           ...prev,
-          payment_status: webhook.payment_status ?? "COMPLETE",
-          ...(webhook.pf_payment_id
-            ? { pf_payment_id: webhook.pf_payment_id }
+          payment_status: "COMPLETE",
+          ...(pfPaymentId != null && pfPaymentId !== ""
+            ? { pf_payment_id: pfPaymentId }
             : {}),
         },
       });
