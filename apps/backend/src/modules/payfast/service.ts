@@ -150,7 +150,7 @@ export default class PayfastProviderService extends AbstractPaymentProvider<Payf
     const data = (input.data ?? {}) as PayfastSessionData;
     if (data.payment_status === "COMPLETE") {
       return {
-        status: PaymentSessionStatus.AUTHORIZED,
+        status: PaymentSessionStatus.CAPTURED,
         data,
       };
     }
@@ -213,7 +213,7 @@ export default class PayfastProviderService extends AbstractPaymentProvider<Payf
     if (prev.payment_status === "COMPLETE") {
       return {
         data: prev,
-        status: PaymentSessionStatus.AUTHORIZED,
+        status: PaymentSessionStatus.CAPTURED,
       };
     }
     if (!amount || !currency_code) {

@@ -5,6 +5,7 @@ import {
   Modules,
   PaymentActions,
 } from "@medusajs/framework/utils";
+import { applyPayfastSuccessfulPayment } from "../../../lib/payfast/apply-successful-payment";
 import { centsToMedusaAmount } from "../../../lib/payfast/medusa-amount";
 import { rawItnBodyString } from "../../../lib/payfast/raw-body";
 
@@ -71,14 +72,9 @@ export async function handlePayfastItn(
       const amountCents =
         typeof prev.amount_cents === "number" ? prev.amount_cents : undefined;
       const amount =
-        session?.amount ??
         (typeof webhookAmount === "number" ? webhookAmount : undefined) ??
+        (typeof session?.amount === "number" ? session.amount : undefined) ??
         (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
-      const currency_code =
-        (typeof session?.currency_code === "string" && session.currency_code) ||
-        (typeof prev.currency_code === "string"
-          ? prev.currency_code
-          : "zar");
       const dataPatch = {
         ...prev,
         payment_status: "COMPLETE",
@@ -86,17 +82,16 @@ export async function handlePayfastItn(
           ? { pf_payment_id: String(itn.pf_payment_id) }
           : {}),
       };
-      const resolvedAmount =
-        amount ??
-        (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
-      if (resolvedAmount != null) {
-        await paymentService.updatePaymentSession({
-          id: sessionId,
-          amount: resolvedAmount,
-          currency_code,
-          data: dataPatch,
-        });
+      await paymentService.updatePaymentSession({
+        id: sessionId,
+        data: dataPatch,
+      });
+
+      if (amount != null) {
+        await applyPayfastSuccessfulPayment(req.scope, sessionId, amount);
       }
+      res.sendStatus(200);
+      return;
     }
 
     const wfEngine = req.scope.resolve(Modules.WORKFLOW_ENGINE);

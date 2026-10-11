@@ -1,10 +1,6 @@
-import { processPaymentWorkflowId } from "@medusajs/core-flows";
 import type { MedusaContainer } from "@medusajs/framework/types";
-import {
-  ContainerRegistrationKeys,
-  Modules,
-  PaymentActions,
-} from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
+import { applyPayfastSuccessfulPayment } from "./apply-successful-payment";
 import { historyRange } from "./api";
 import { getPayfastConfig } from "./config";
 import { centsToMedusaAmount } from "./medusa-amount";
@@ -79,29 +75,16 @@ export async function reconcilePayfastReturn(
     ...(pfPaymentId ? { pf_payment_id: pfPaymentId } : {}),
   };
 
-  const amount =
-    session.amount ?? centsToMedusaAmount(amountCents);
-  const currency_code =
-    (typeof session.currency_code === "string" && session.currency_code) ||
-    (typeof prev.currency_code === "string" ? prev.currency_code : "zar");
-
   await paymentService.updatePaymentSession({
     id: sessionId,
-    amount,
-    currency_code,
     data: dataPatch,
   });
 
-  const wfEngine = scope.resolve(Modules.WORKFLOW_ENGINE);
-  await wfEngine.run(processPaymentWorkflowId, {
-    input: {
-      action: PaymentActions.SUCCESSFUL,
-      data: {
-        session_id: sessionId,
-        amount: centsToMedusaAmount(amountCents),
-      },
-    },
-  });
+  await applyPayfastSuccessfulPayment(
+    scope,
+    sessionId,
+    centsToMedusaAmount(amountCents)
+  );
 
   return { ok: true, sessionId };
 }
