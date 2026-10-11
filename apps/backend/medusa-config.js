@@ -25,7 +25,8 @@ module.exports = defineConfig({
         webhook_delay: 0,
         providers: [
           {
-            resolve: path.join(__dirname, "src", "modules", "payfast"),
+            // When copied into `.medusa/server/`, `__dirname` is not `apps/backend`.
+            resolve: path.join(__dirname, "..", "..", "src", "modules", "payfast"),
             id: "payfast",
             options: {},
           },
