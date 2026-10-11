@@ -69,24 +69,31 @@ export async function handlePayfastItn(
         filters: { id: sessionId },
       });
       const session = sessions?.[0];
-      if (!session?.currency_code || session.amount == null) {
-        res.sendStatus(200);
-        return;
+      const prev = (session?.data ?? {}) as Record<string, unknown>;
+      const itn = bodyToRecord(req.body);
+      const currencyCode =
+        session?.currency_code ??
+        (typeof prev.currency_code === "string" ? prev.currency_code : undefined);
+      const amount =
+        typeof session?.amount === "number"
+          ? session.amount
+          : typeof prev.amount_cents === "number"
+            ? prev.amount_cents
+            : undefined;
+      if (currencyCode && amount != null) {
+        await paymentService.updatePaymentSession({
+          id: sessionId,
+          amount,
+          currency_code: currencyCode,
+          data: {
+            ...prev,
+            payment_status: "COMPLETE",
+            ...(itn.pf_payment_id != null && itn.pf_payment_id !== ""
+              ? { pf_payment_id: String(itn.pf_payment_id) }
+              : {}),
+          },
+        });
       }
-      const prev = (session.data ?? {}) as Record<string, unknown>;
-      const pfPaymentId = bodyToRecord(req.body).pf_payment_id;
-      await paymentService.updatePaymentSession({
-        id: sessionId,
-        amount: session.amount,
-        currency_code: session.currency_code,
-        data: {
-          ...prev,
-          payment_status: "COMPLETE",
-          ...(pfPaymentId != null && pfPaymentId !== ""
-            ? { pf_payment_id: pfPaymentId }
-            : {}),
-        },
-      });
     }
 
     const wfEngine = req.scope.resolve(Modules.WORKFLOW_ENGINE);
