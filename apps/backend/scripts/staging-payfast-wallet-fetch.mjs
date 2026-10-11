@@ -29,9 +29,7 @@ const UA =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 async function resolvePublishableKey() {
-  const fromEnv =
-    process.env.MEDUSA_PUBLISHABLE_KEY?.trim() ||
-    process.env.MEDUSA_STAGING_PUBLISHABLE_KEY?.trim();
+  const fromEnv = process.env.MEDUSA_PUBLISHABLE_KEY?.trim();
   if (fromEnv) return fromEnv;
   const home = await fetch(`${STOREFRONT}/za`, { headers: { "User-Agent": UA } });
   const html = await home.text();
