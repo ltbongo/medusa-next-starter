@@ -133,6 +133,19 @@ export async function middleware(request: NextRequest) {
   const queryString = request.nextUrl.search || ""
   const redirectUrl = `${request.nextUrl.origin}/${country}${redirectPath}${queryString}`
 
+  // Root `/` should return 200 for demo health checks; deeper paths keep country redirect.
+  if (request.nextUrl.pathname === "/") {
+    const response = NextResponse.rewrite(
+      new URL(`/${country}${queryString}`, request.url)
+    )
+    if (!cacheIdCookie) {
+      response.cookies.set("_medusa_cache_id", cacheId, {
+        maxAge: 60 * 60 * 24,
+      })
+    }
+    return response
+  }
+
   return NextResponse.redirect(redirectUrl, 307)
 }
 
