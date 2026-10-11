@@ -2,7 +2,6 @@
 // Headers on EVERY call: merchant-id, version (v1), timestamp (ISO-8601), signature (rule 3, see signature.ts).
 // A passphrase must be set on the merchant account before any API call works.
 // Sandbox: same base URL + ?testing=true (excluded from the signature).
-import "server-only";
 import { getPayfastConfig, PAYFAST_API_BASE, type PayfastConfig } from "./config";
 import { apiSignature } from "./signature";
 
