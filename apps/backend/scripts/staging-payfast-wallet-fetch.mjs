@@ -48,16 +48,18 @@ async function resolvePublishableKey() {
 
 let PK = "";
 
-const storeHeaders = {
-  "Content-Type": "application/json",
-  "x-publishable-api-key": PK,
-};
+function storeHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "x-publishable-api-key": PK,
+  };
+}
 
 /** @param {string} path */
 async function store(path, init = {}) {
   const res = await fetch(`${API}/store${path}`, {
     ...init,
-    headers: { ...storeHeaders, ...(init.headers ?? {}) },
+    headers: { ...storeHeaders(), ...(init.headers ?? {}) },
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -176,7 +178,7 @@ async function createOrderAndPayfastSession() {
     const cid = cartProbe.cart.id;
     const addRes = await fetch(`${API}/store/carts/${cid}/line-items`, {
       method: "POST",
-      headers: storeHeaders,
+      headers: storeHeaders(),
       body: JSON.stringify({ variant_id: v.id, quantity: 1 }),
     });
     if (addRes.ok) {
@@ -429,7 +431,7 @@ async function main() {
   if (mPaymentId) {
     const recRes = await fetch(`${API}/store/payfast/reconcile`, {
       method: "POST",
-      headers: storeHeaders,
+      headers: storeHeaders(),
       body: JSON.stringify({ ref: mPaymentId }),
     });
     const recBody = await recRes.json().catch(() => ({}));
