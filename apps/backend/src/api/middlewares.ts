@@ -5,6 +5,16 @@ import { configureStoreSearch, defineMiddlewares } from '@medusajs/framework/htt
 export default defineMiddlewares({
   routes: [
     {
+      methods: ['POST'],
+      matcher: '/hooks/payfast/itn',
+      bodyParser: { preserveRawBody: true },
+    },
+    {
+      methods: ['POST'],
+      matcher: '/hooks/payment/payfast',
+      bodyParser: { preserveRawBody: true },
+    },
+    {
       method: ['POST'],
       matcher: '/store/search',
       middlewares: [

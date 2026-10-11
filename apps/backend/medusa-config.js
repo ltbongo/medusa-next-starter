@@ -17,4 +17,19 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET,
     },
   },
+  modules: [
+    {
+      resolve: "@medusajs/medusa/payment",
+      options: {
+        webhook_delay: 0,
+        providers: [
+          {
+            resolve: "./src/modules/payfast",
+            id: "payfast",
+            options: {},
+          },
+        ],
+      },
+    },
+  ],
 })
