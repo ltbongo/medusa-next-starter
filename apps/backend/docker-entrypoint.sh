@@ -39,5 +39,16 @@ c.connect().then(() => c.query('SELECT 1')).then(() => c.end()).then(() => proce
     echo "Running demo seed (idempotent)..."
     npx medusa exec /app/apps/backend/src/scripts/seed-demo.ts || echo "WARN: demo seed step failed (non-fatal if already seeded)"
   fi
+  node -e "
+const { Client } = require('pg');
+(async () => {
+  const c = new Client({ connectionString: process.env.DATABASE_URL });
+  await c.connect();
+  const r = await c.query(\"SELECT token FROM api_key WHERE type = 'publishable' ORDER BY created_at ASC LIMIT 1\");
+  const token = r.rows[0]?.token;
+  if (token) console.log('B9_PUBLISHABLE_API_KEY:' + token);
+  await c.end();
+})().catch((e) => { console.error('WARN: could not read publishable key:', e.message); process.exit(0); });
+" || true
 fi
 exec npx medusa start
