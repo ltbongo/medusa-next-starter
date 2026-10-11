@@ -35,10 +35,6 @@ c.connect().then(() => c.query('SELECT 1')).then(() => c.end()).then(() => proce
     exit 1
   fi
   npx medusa db:migrate || { echo "ERROR: medusa db:migrate failed" >&2; exit 1; }
-  if [ "${B9_RUN_DEMO_SEED:-1}" = "1" ]; then
-    echo "Running demo seed (idempotent)..."
-    npx medusa exec ./src/scripts/seed-demo.js || echo "WARN: demo seed step failed (non-fatal if already seeded)"
-  fi
   node -e "
 const { Client } = require('pg');
 (async () => {
@@ -51,4 +47,25 @@ const { Client } = require('pg');
 })().catch((e) => { console.error('WARN: could not read publishable key:', e.message); process.exit(0); });
 " || true
 fi
-exec npx medusa start
+
+if [ "${B9_RUN_DEMO_SEED:-1}" = "1" ]; then
+  npx medusa start &
+  MEDUSA_PID=$!
+  echo "Waiting for Medusa health before demo seed (max 120s)..."
+  j=0
+  while [ "$j" -lt 60 ]; do
+    if wget -q --spider http://127.0.0.1:9000/health 2>/dev/null; then
+      echo "Medusa is healthy; running demo seed..."
+      npx medusa exec ./src/scripts/seed-demo.js || echo "WARN: demo seed step failed (non-fatal if already seeded)"
+      break
+    fi
+    j=$((j + 1))
+    sleep 2
+  done
+  if [ "$j" -ge 60 ]; then
+    echo "WARN: Medusa health timeout; skipping demo seed"
+  fi
+  wait "$MEDUSA_PID"
+else
+  exec npx medusa start
+fi
