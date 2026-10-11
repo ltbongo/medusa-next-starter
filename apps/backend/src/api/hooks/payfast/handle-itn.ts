@@ -65,21 +65,31 @@ export async function handlePayfastItn(
       const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
       const { data: sessions } = await query.graph({
         entity: "payment_session",
-        fields: ["id", "data"],
+        fields: ["id", "amount", "currency_code", "data"],
         filters: { id: sessionId },
       });
-      const prev = (sessions?.[0]?.data ?? {}) as Record<string, unknown>;
+      const session = sessions?.[0];
+      const prev = (session?.data ?? {}) as Record<string, unknown>;
       const itn = bodyToRecord(req.body);
-      await paymentService.updatePaymentSession({
-        id: sessionId,
-        data: {
-          ...prev,
-          payment_status: "COMPLETE",
-          ...(itn.pf_payment_id != null && itn.pf_payment_id !== ""
-            ? { pf_payment_id: String(itn.pf_payment_id) }
-            : {}),
-        },
-      });
+      const webhookAmount = processedEvent.data?.amount;
+      const amount =
+        session?.amount ??
+        (typeof webhookAmount === "number" ? webhookAmount : undefined);
+      const currency_code = session?.currency_code ?? "zar";
+      if (amount != null) {
+        await paymentService.updatePaymentSession({
+          id: sessionId,
+          amount,
+          currency_code,
+          data: {
+            ...prev,
+            payment_status: "COMPLETE",
+            ...(itn.pf_payment_id != null && itn.pf_payment_id !== ""
+              ? { pf_payment_id: String(itn.pf_payment_id) }
+              : {}),
+          },
+        });
+      }
     }
 
     const wfEngine = req.scope.resolve(Modules.WORKFLOW_ENGINE);
