@@ -73,24 +73,15 @@ export async function reconcilePayfastReturn(
     typeof prev.amount_cents === "number" ? prev.amount_cents : undefined;
   if (amountCents == null) return { ok: false, reason: "missing_amount_cents" };
 
-  const amount =
-    typeof session.amount === "number"
-      ? session.amount
-      : centsToMedusaAmount(amountCents);
-  const currency_code =
-    (typeof session.currency_code === "string" && session.currency_code) ||
-    (typeof prev.currency_code === "string" ? prev.currency_code : "zar");
-
   const dataPatch = {
     ...prev,
     payment_status: "COMPLETE",
     ...(pfPaymentId ? { pf_payment_id: pfPaymentId } : {}),
   };
 
+  // Do not pass amount/currency_code here — PayFast updatePayment re-initiates the session and drops COMPLETE.
   await paymentService.updatePaymentSession({
     id: sessionId,
-    amount,
-    currency_code,
     data: dataPatch,
   });
 

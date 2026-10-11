@@ -86,17 +86,11 @@ export async function handlePayfastItn(
           ? { pf_payment_id: String(itn.pf_payment_id) }
           : {}),
       };
-      const resolvedAmount =
-        amount ??
-        (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
-      if (resolvedAmount != null) {
-        await paymentService.updatePaymentSession({
-          id: sessionId,
-          amount: resolvedAmount,
-          currency_code,
-          data: dataPatch,
-        });
-      }
+      // Patch session data only — passing amount/currency_code triggers PayFast updatePayment re-init and clears COMPLETE.
+      await paymentService.updatePaymentSession({
+        id: sessionId,
+        data: dataPatch,
+      });
     }
 
     const wfEngine = req.scope.resolve(Modules.WORKFLOW_ENGINE);
