@@ -26,6 +26,14 @@ s.on('timeout', () => { s.destroy(); process.exit(1); });
     echo "ERROR: database not reachable after 90s" >&2
     exit 1
   fi
+  if ! node -e "
+const { Client } = require('pg');
+const c = new Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 8000 });
+c.connect().then(() => c.query('SELECT 1')).then(() => c.end()).then(() => process.exit(0)).catch((e) => { console.error('pg probe failed:', e.message); process.exit(1); });
+"; then
+    echo "ERROR: PostgreSQL auth/query probe failed (check DATABASE_URL password vs volume)" >&2
+    exit 1
+  fi
   npx medusa db:migrate || { echo "ERROR: medusa db:migrate failed" >&2; exit 1; }
   if [ "${B9_RUN_DEMO_SEED:-1}" = "1" ]; then
     echo "Running demo seed (idempotent)..."

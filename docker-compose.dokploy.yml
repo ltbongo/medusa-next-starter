@@ -43,7 +43,7 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 9000
-      DATABASE_URL: postgresql://medusa:${POSTGRES_PASSWORD}@postgres:5432/medusa
+      DATABASE_URL: postgresql://medusa:${POSTGRES_PASSWORD}@postgres:5432/medusa?sslmode=disable
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       COOKIE_SECRET: ${COOKIE_SECRET}
