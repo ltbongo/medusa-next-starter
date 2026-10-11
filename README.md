@@ -93,6 +93,40 @@ After the first deploy, copy the publishable API key from the backend seed logs 
 
 Demo admin uses the shared company `B9_DEMO_LOGIN` pattern (`b9demo` user) once an admin account is created on the reference instance — public storefront pages stay open (no site-wide basic auth).
 
+## PayFast per client
+
+PayFast credentials and mode are set on the **Medusa backend** (`apps/backend`), not in the Next.js storefront bundle. Copy `apps/backend/.env.template` and configure the variables below in Dokploy (or your host env). **Never commit merchant keys, passphrases, or live credentials to git.**
+
+| Variable | Purpose |
+|----------|---------|
+| `PAYFAST_MERCHANT_ID` | PayFast merchant ID (numeric) |
+| `PAYFAST_MERCHANT_KEY` | PayFast merchant key |
+| `PAYFAST_PASSPHRASE` | Salt passphrase from the PayFast dashboard (required in live mode; strongly recommended in sandbox) |
+| `PAYFAST_SANDBOX` | `true` = sandbox hosts and checkout; `false` = live PayFast |
+| `SITE_URL` | Public **https** storefront origin (no trailing slash); used for return/cancel URLs |
+| `MEDUSA_BACKEND_URL` | Public **https** Medusa API origin (no trailing slash); used to build the ITN `notify_url` |
+
+### Sandbox vs live
+
+- **Sandbox:** `PAYFAST_SANDBOX=true`. Use sandbox merchant credentials from your own [PayFast sandbox](https://sandbox.payfast.co.za) account (B9 stores these as Paperclip secrets for staging; DevOps maps them onto the variable names above).
+- **Live:** `PAYFAST_SANDBOX=false`. Live merchant ID, key, and passphrase are supplied only by Ludwig via Paperclip secrets and applied by DevOps — do not paste them in issues, chat, or the repo.
+
+You can also set `PAYFAST_MODE` to `sandbox` or `live` if `PAYFAST_SANDBOX` is unset; prefer `PAYFAST_SANDBOX=true/false` for per-client Dokploy env.
+
+### ITN (Instant Transaction Notification)
+
+PayFast posts ITNs to the Medusa API. The checkout `notify_url` is:
+
+```text
+https://<medusa-api-host>/hooks/payfast/itn
+```
+
+Example on the B9 reference stack: `https://medusa-next-starter-api.demo.b9design.co.za/hooks/payfast/itn` (replace the hostname with the client’s Medusa API URL on Dokploy).
+
+Medusa also accepts the provider webhook path `https://<medusa-api-host>/hooks/payment/payfast` (same handler). The route must be **publicly reachable over HTTPS**, must **not** sit behind site-wide basic auth, and must return HTTP 200 when the ITN is processed. See PayFast’s ITN documentation: [Instant Transaction Notification](https://developers.payfast.co.za/docs#instant_transaction_notification).
+
+Optional: `PAYFAST_CLIENT_IP_HEADER` (default `x-real-ip`) if a CDN or proxy sits in front of the API.
+
 ---
 
 # Medusa DTC Starter
