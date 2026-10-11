@@ -20,7 +20,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=build /app/apps/backend/.medusa/server ./apps/backend/.medusa/server
 COPY --from=build /app/apps/backend/src ./apps/backend/src
-COPY apps/backend/medusa-config.js ./apps/backend/medusa-config.js
+COPY apps/backend/medusa-config.docker.js ./apps/backend/medusa-config.docker.js
 COPY apps/backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENV HOST=0.0.0.0
