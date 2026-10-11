@@ -219,6 +219,10 @@ export default class PayfastProviderService extends AbstractPaymentProvider<Payf
     if (!amount || !currency_code) {
       return { data: prev };
     }
+    // Checkout already started — ITN/reconcile only patch session data; do not re-initiate.
+    if (prev.session_id && Array.isArray(prev.fields) && prev.fields.length > 0) {
+      return { data: prev };
+    }
     const initiated = await this.initiatePayment({
       amount,
       currency_code,
