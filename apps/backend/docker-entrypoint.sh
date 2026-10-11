@@ -37,7 +37,7 @@ c.connect().then(() => c.query('SELECT 1')).then(() => c.end()).then(() => proce
   npx medusa db:migrate || { echo "ERROR: medusa db:migrate failed" >&2; exit 1; }
   if [ "${B9_RUN_DEMO_SEED:-1}" = "1" ]; then
     echo "Running demo seed (idempotent)..."
-    npx medusa exec /app/apps/backend/src/scripts/seed-demo.ts || echo "WARN: demo seed step failed (non-fatal if already seeded)"
+    npx medusa exec ./src/scripts/seed-demo.js || echo "WARN: demo seed step failed (non-fatal if already seeded)"
   fi
   node -e "
 const { Client } = require('pg');
