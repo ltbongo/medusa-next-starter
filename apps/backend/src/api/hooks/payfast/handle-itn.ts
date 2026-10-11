@@ -5,12 +5,8 @@ import {
   Modules,
   PaymentActions,
 } from "@medusajs/framework/utils";
-
-function normalizeRawBody(raw: unknown): string | Buffer | undefined {
-  if (raw == null) return undefined;
-  if (typeof raw === "string" || Buffer.isBuffer(raw)) return raw;
-  return undefined;
-}
+import { centsToMedusaAmount } from "../../../lib/payfast/medusa-amount";
+import { rawItnBodyString } from "../../../lib/payfast/raw-body";
 
 function bodyToRecord(body: unknown): Record<string, unknown> {
   if (body && typeof body === "object" && !Array.isArray(body)) {
@@ -29,7 +25,7 @@ export async function handlePayfastItn(
 ) {
   try {
     const paymentService = req.scope.resolve(Modules.PAYMENT);
-    const rawData = normalizeRawBody(req.rawBody) ?? "";
+    const rawData = rawItnBodyString(req.rawBody);
     const processedEvent = await paymentService.getWebhookActionAndData({
       provider: "payfast",
       payload: {
@@ -72,22 +68,35 @@ export async function handlePayfastItn(
       const prev = (session?.data ?? {}) as Record<string, unknown>;
       const itn = bodyToRecord(req.body);
       const webhookAmount = processedEvent.data?.amount;
+      const amountCents =
+        typeof prev.amount_cents === "number" ? prev.amount_cents : undefined;
       const amount =
         session?.amount ??
-        (typeof webhookAmount === "number" ? webhookAmount : undefined);
-      const currency_code = session?.currency_code ?? "zar";
+        (typeof webhookAmount === "number" ? webhookAmount : undefined) ??
+        (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
+      const currency_code =
+        (typeof session?.currency_code === "string" && session.currency_code) ||
+        (typeof prev.currency_code === "string"
+          ? prev.currency_code
+          : "zar");
+      const dataPatch = {
+        ...prev,
+        payment_status: "COMPLETE",
+        ...(itn.pf_payment_id != null && itn.pf_payment_id !== ""
+          ? { pf_payment_id: String(itn.pf_payment_id) }
+          : {}),
+      };
       if (amount != null) {
         await paymentService.updatePaymentSession({
           id: sessionId,
           amount,
           currency_code,
-          data: {
-            ...prev,
-            payment_status: "COMPLETE",
-            ...(itn.pf_payment_id != null && itn.pf_payment_id !== ""
-              ? { pf_payment_id: String(itn.pf_payment_id) }
-              : {}),
-          },
+          data: dataPatch,
+        });
+      } else {
+        await paymentService.updatePaymentSession({
+          id: sessionId,
+          data: dataPatch,
         });
       }
     }

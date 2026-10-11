@@ -46,6 +46,7 @@ import {
   centsToMedusaAmount,
   medusaAmountToCents,
 } from "../../lib/payfast/medusa-amount";
+import { rawItnBodyString } from "../../lib/payfast/raw-body";
 
 type PayfastSessionData = {
   session_id: string;
@@ -78,24 +79,6 @@ function toFetchHeaders(
     }
   }
   return h;
-}
-
-function rawBodyToString(raw: unknown): string {
-  if (raw == null) return "";
-  if (typeof raw === "string") return raw;
-  if (Buffer.isBuffer(raw)) return raw.toString("utf8");
-  if (
-    typeof raw === "object" &&
-    raw !== null &&
-    "type" in raw &&
-    (raw as { type: string }).type === "Buffer" &&
-    Array.isArray((raw as unknown as { data: number[] }).data)
-  ) {
-    return Buffer.from((raw as unknown as { data: number[] }).data).toString(
-      "utf8"
-    );
-  }
-  return "";
 }
 
 export default class PayfastProviderService extends AbstractPaymentProvider<PayfastProviderOptions> {
@@ -242,7 +225,7 @@ export default class PayfastProviderService extends AbstractPaymentProvider<Payf
     webhookData: ProviderWebhookPayload["payload"]
   ): Promise<WebhookActionResult> {
     const cfg = getPayfastConfig();
-    const raw = rawBodyToString(webhookData.rawData);
+    const raw = rawItnBodyString(webhookData.rawData);
     const pairs =
       raw.length > 0
         ? parseItnBody(raw)
