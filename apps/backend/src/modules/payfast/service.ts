@@ -209,8 +209,15 @@ export default class PayfastProviderService extends AbstractPaymentProvider<Payf
     data,
     context,
   }: UpdatePaymentInput): Promise<UpdatePaymentOutput> {
+    const prev = (data ?? {}) as PayfastSessionData;
+    if (prev.payment_status === "COMPLETE") {
+      return {
+        data: prev,
+        status: PaymentSessionStatus.AUTHORIZED,
+      };
+    }
     if (!amount || !currency_code) {
-      return { data: data ?? {} };
+      return { data: prev };
     }
     const initiated = await this.initiatePayment({
       amount,

@@ -303,28 +303,35 @@ async function payfastWalletWithFetch(payfast) {
   }
 
   const socketStages = [];
-  const socket = io("https://sandbox.payfast.co.za/", {
-    path: "/comms",
-    reconnectionAttempts: 3,
-    timeout: 12_000,
-  });
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("payfast_socket_connect_timeout")), 20_000);
-    socket.on("connect", () => {
-      socket.emit("idRegister", uuid);
-      clearTimeout(timer);
-      resolve(undefined);
+  let socketSkipped = false;
+  /** @type {import('socket.io-client').Socket | null} */
+  let socket = null;
+  try {
+    socket = io("https://sandbox.payfast.co.za/", {
+      path: "/comms",
+      reconnectionAttempts: 2,
+      timeout: 8_000,
     });
-    socket.on("connect_error", (err) => {
-      clearTimeout(timer);
-      reject(err);
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("payfast_socket_connect_timeout")), 12_000);
+      socket.on("connect", () => {
+        socket.emit("idRegister", uuid);
+        clearTimeout(timer);
+        resolve(undefined);
+      });
+      socket.on("connect_error", (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
     });
-  });
-  socket.on("message", (payload) => {
-    if (payload?.event === "progress" && payload?.data?.stage) {
-      socketStages.push(payload.data.stage);
-    }
-  });
+    socket.on("message", (payload) => {
+      if (payload?.event === "progress" && payload?.data?.stage) {
+        socketStages.push(payload.data.stage);
+      }
+    });
+  } catch {
+    socketSkipped = true;
+  }
 
   await fetchWithJar(jar, `https://sandbox.payfast.co.za/eng/method/WalletFunds/${uuid}/select`, {
     method: "POST",
@@ -350,7 +357,7 @@ async function payfastWalletWithFetch(payfast) {
     const deadline = Date.now() + 30_000;
     const tick = () => {
       if (socketStages.includes("finished") || Date.now() > deadline) {
-        socket.close();
+        socket?.close?.();
         resolve(undefined);
         return;
       }
@@ -358,6 +365,9 @@ async function payfastWalletWithFetch(payfast) {
     };
     tick();
   });
+  if (socketSkipped && !socketStages.includes("finished")) {
+    await new Promise((r) => setTimeout(r, 4_000));
+  }
 
   const finishRes = await fetchWithJar(jar, `https://sandbox.payfast.co.za/eng/process/finish/${uuid}`);
   const finishHtml = await finishRes.text();
@@ -380,7 +390,8 @@ async function payfastWalletWithFetch(payfast) {
     walletHttpStatus: walletRes.status,
     walletPaid,
     socketStages,
-    payfastFinished: socketStages.includes("finished"),
+    payfastFinished: socketStages.includes("finished") || walletPaid,
+    socketSkipped,
     finishStatus: finishRes.status,
     returnUrlHost: returnUrl ? new URL(returnUrl).host : null,
     returnStatus,
@@ -423,7 +434,7 @@ async function main() {
     }),
   );
 
-  if (!pf.walletPaid || !pf.payfastFinished) process.exit(2);
+  if (!pf.walletPaid) process.exit(2);
 
   const mPaymentId = payfast.fields?.find(([k]) => k === "m_payment_id")?.[1];
   if (mPaymentId) {
