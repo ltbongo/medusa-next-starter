@@ -1,5 +1,4 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
-import { reconcilePayfastReturn } from "../../../../lib/payfast/reconcile-return";
 
 /**
  * Sandbox return-path reconciliation when PayFast wallet ITN is missing or delayed.
@@ -12,6 +11,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return;
   }
   try {
+    const { reconcilePayfastReturn } = await import(
+      "../../../../lib/payfast/reconcile-return"
+    );
     const result = await reconcilePayfastReturn(req.scope, ref);
     res.status(result.ok ? 200 : 404).json(result);
   } catch (err) {

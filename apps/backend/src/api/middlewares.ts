@@ -15,8 +15,9 @@ export default defineMiddlewares({
       bodyParser: { preserveRawBody: true },
     },
     {
-      methods: ['POST'],
+      method: ['POST'],
       matcher: '/store/payfast/reconcile',
+      middlewares: [],
     },
     {
       method: ['POST'],
