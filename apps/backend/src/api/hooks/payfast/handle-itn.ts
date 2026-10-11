@@ -75,6 +75,9 @@ export async function handlePayfastItn(
         (typeof webhookAmount === "number" ? webhookAmount : undefined) ??
         (typeof session?.amount === "number" ? session.amount : undefined) ??
         (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
+      const currency_code =
+        (typeof session?.currency_code === "string" && session.currency_code) ||
+        (typeof prev.currency_code === "string" ? prev.currency_code : "zar");
       const dataPatch = {
         ...prev,
         payment_status: "COMPLETE",
@@ -82,14 +85,21 @@ export async function handlePayfastItn(
           ? { pf_payment_id: String(itn.pf_payment_id) }
           : {}),
       };
+      const resolvedAmount =
+        amount ??
+        (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
+      if (resolvedAmount == null) {
+        res.sendStatus(200);
+        return;
+      }
       await paymentService.updatePaymentSession({
         id: sessionId,
+        amount: resolvedAmount,
+        currency_code,
         data: dataPatch,
       });
 
-      if (amount != null) {
-        await applyPayfastSuccessfulPayment(req.scope, sessionId, amount);
-      }
+      await applyPayfastSuccessfulPayment(req.scope, sessionId, resolvedAmount);
       res.sendStatus(200);
       return;
     }

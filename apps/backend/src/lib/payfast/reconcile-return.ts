@@ -75,8 +75,18 @@ export async function reconcilePayfastReturn(
     ...(pfPaymentId ? { pf_payment_id: pfPaymentId } : {}),
   };
 
+  const currency_code =
+    (typeof session.currency_code === "string" && session.currency_code) ||
+    (typeof prev.currency_code === "string" ? prev.currency_code : "zar");
+  const sessionAmount =
+    typeof session.amount === "number"
+      ? session.amount
+      : centsToMedusaAmount(amountCents);
+
   await paymentService.updatePaymentSession({
     id: sessionId,
+    amount: sessionAmount,
+    currency_code,
     data: dataPatch,
   });
 
