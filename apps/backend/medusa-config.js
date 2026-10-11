@@ -1,3 +1,4 @@
+const path = require("path")
 const { loadEnv, defineConfig } = require("@medusajs/framework/utils")
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
@@ -24,7 +25,7 @@ module.exports = defineConfig({
         webhook_delay: 0,
         providers: [
           {
-            resolve: "./src/modules/payfast",
+            resolve: path.join(__dirname, "src", "modules", "payfast"),
             id: "payfast",
             options: {},
           },
