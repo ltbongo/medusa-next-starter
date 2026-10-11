@@ -86,16 +86,14 @@ export async function handlePayfastItn(
           ? { pf_payment_id: String(itn.pf_payment_id) }
           : {}),
       };
-      if (amount != null) {
+      const resolvedAmount =
+        amount ??
+        (amountCents != null ? centsToMedusaAmount(amountCents) : undefined);
+      if (resolvedAmount != null) {
         await paymentService.updatePaymentSession({
           id: sessionId,
-          amount,
+          amount: resolvedAmount,
           currency_code,
-          data: dataPatch,
-        });
-      } else {
-        await paymentService.updatePaymentSession({
-          id: sessionId,
           data: dataPatch,
         });
       }
