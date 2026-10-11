@@ -1,4 +1,3 @@
-import "server-only";
 import { processPaymentWorkflowId } from "@medusajs/core-flows";
 import type { MedusaContainer } from "@medusajs/framework/types";
 import {
