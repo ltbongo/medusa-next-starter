@@ -75,7 +75,14 @@ test("checkout signature: documented order, blanks dropped, passphrase last", ()
   assert.equal(sig, md5("merchant_id=10000100&merchant_key=46f0cd694581a&amount=100.00&item_name=Test+Product&passphrase=pass+word"));
 });
 
-const cfg: PayfastConfig = { mode: "sandbox", merchantId: "10000100", merchantKey: "46f0cd694581a", passphrase: "secret phrase", siteUrl: "https://shop.example.co.za" };
+const cfg: PayfastConfig = {
+  mode: "sandbox",
+  merchantId: "10000100",
+  merchantKey: "46f0cd694581a",
+  passphrase: "secret phrase",
+  siteUrl: "https://shop.example.co.za",
+  backendUrl: "https://api.shop.example.co.za",
+};
 
 test("buildCheckoutFields orders fields per docs, signs only signed fields, puts setup after signature", () => {
   const { fields, signature } = buildCheckoutFields(cfg, {
