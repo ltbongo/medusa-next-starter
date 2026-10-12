@@ -3,6 +3,7 @@ import { Container } from "@modules/common/components/ui"
 import ChevronDown from "@modules/common/icons/chevron-down"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { convertToLocale } from "@lib/util/money"
+import CreditBalance from "../credit-balance"
 import { HttpTypes } from "@medusajs/types"
 
 type OverviewProps = {
@@ -13,6 +14,7 @@ type OverviewProps = {
 const Overview = ({ customer, orders }: OverviewProps) => {
   return (
     <div data-testid="overview-page-wrapper">
+      <CreditBalance customer={customer} />
       <div className="hidden small:block">
         <div className="text-xl-semi flex justify-between items-center mb-4">
           <span data-testid="welcome-message" data-value={customer?.first_name}>
